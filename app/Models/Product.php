@@ -39,6 +39,26 @@ class Product extends Model implements HasMedia
 
     public function getDisplayImageAttribute(): string
     {
-        return $this->getFirstMediaUrl('images') ?: ($this->image_url ?: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80');
+        $mediaUrl = $this->getFirstMediaUrl('images');
+
+        if ($mediaUrl && filter_var($mediaUrl, FILTER_VALIDATE_URL)) {
+            return $mediaUrl;
+        }
+
+        if ($mediaUrl) {
+            $relativePath = parse_url($mediaUrl, PHP_URL_PATH);
+            if ($relativePath) {
+                $publicPath = public_path(ltrim($relativePath, '/'));
+                if (file_exists($publicPath)) {
+                    return $mediaUrl;
+                }
+            }
+        }
+
+        if (! empty($this->image_url) && filter_var($this->image_url, FILTER_VALIDATE_URL)) {
+            return $this->image_url;
+        }
+
+        return 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80';
     }
 }
